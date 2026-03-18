@@ -15,24 +15,24 @@ Pipeline Execution Order
     [EarlyFusionDataset]        Phase 1 – Data loading & synchronisation
           │
           ▼
-    [project_radar_to_camera]   Phase 3 – Radar point cloud → image plane
+    [project_radar_to_camera]   Phase 2 – Radar point cloud → image plane
           │
           ▼
-    [generate_spatial_gate]     Phase 4 – Build soft radar-gated mask
+    [generate_spatial_gate]     Phase 3 – Build soft radar-gated mask
     [apply_radar_gating]                  Amplify/suppress camera pixels
     [calculate_snr]                       Log per-frame SNR gain
           │
           ▼
-    [extract_structural_boundaries] Phase 5 – Low-light edge map
+    [extract_structural_boundaries] Phase 4 – Low-light edge map
           │
           ▼
-    [apply_clutter_rejection]   Phase 6 – Remove multipath ghost returns
+    [apply_clutter_rejection]   Phase 5 – Remove multipath ghost returns
           │
           ▼
-    [construct_early_fusion_tensor] Phase 7 – Build (1, C+2, H, W) tensor
+    [construct_early_fusion_tensor] Phase 6 – Build (1, C+2, H, W) tensor
           │
           ▼
-    [SimpleEarlyFusionHead]     Phase 8 – Adapt tensor for object detector
+    [SimpleEarlyFusionHead]     Phase 7 – Adapt tensor for object detector
 
 Usage
 -----
