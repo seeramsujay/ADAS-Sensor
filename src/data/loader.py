@@ -94,6 +94,15 @@ class EarlyFusionDataset(Dataset):
         split: str = "train",
         debug: bool = False,
     ) -> None:
+        """Initialise the dataset and load file-path metadata.
+
+        Args:
+            data_root (str): Root directory of the sensor dataset.
+            split (str): Data partition – ``"train"``, ``"val"``, or ``"test"``.
+            debug (bool): If ``True``, generates synthetic data instead of
+                reading from disk.  Useful for pipeline smoke-tests without a
+                real dataset.
+        """
         self.data_root: str = data_root
         self.split: str = split
         self.debug: bool = debug
