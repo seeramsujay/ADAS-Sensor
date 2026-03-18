@@ -37,6 +37,10 @@ def project_radar_to_camera(radar_pc, K, R, T, img_shape=(720, 1280)):
     """
     h, w = img_shape
     
+    # Guard: empty point cloud
+    if radar_pc.size == 0 or radar_pc.shape[0] == 0:
+        return np.empty((0, 2), dtype=int), np.empty((0, 2), dtype=np.float64)
+    
     # 1. Extract XYZ and velocity
     xyz = radar_pc[:, :3] # Shape (N, 3)
     velocity = radar_pc[:, 3] # Shape (N,)
@@ -70,6 +74,9 @@ def project_radar_to_camera(radar_pc, K, R, T, img_shape=(720, 1280)):
     v_valid = v[img_mask]
     depth_valid = depth[img_mask]
     vel_valid = velocity[img_mask]
+    
+    if len(u_valid) == 0:
+        return np.empty((0, 2), dtype=int), np.empty((0, 2), dtype=np.float64)
     
     valid_points_2d = np.stack((u_valid, v_valid), axis=1)
     valid_metadata = np.stack((depth_valid, vel_valid), axis=1)

@@ -32,9 +32,9 @@ def construct_early_fusion_tensor(denoised_img, radar_pts_2d, radar_metadata):
     
     # Map sparse radar data to dense image grid
     for (u, v), (z, vel) in zip(radar_pts_2d, radar_metadata):
-        # Optional: dilate the sparse points slightly on the grid so CNNs can pick them up easier
-        cv2.circle(depth_grid, (u, v), 3, float(z), -1)
-        cv2.circle(vel_grid, (u, v), 3, float(vel), -1)
+        # Cast to Python int — OpenCV rejects numpy int types
+        cv2.circle(depth_grid, (int(u), int(v)), 3, float(z), -1)
+        cv2.circle(vel_grid, (int(u), int(v)), 3, float(vel), -1)
         
     depth_tensor = torch.from_numpy(depth_grid).unsqueeze(0) # (1, H, W)
     vel_tensor = torch.from_numpy(vel_grid).unsqueeze(0) # (1, H, W)

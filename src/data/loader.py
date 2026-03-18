@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import cv2
 import torch
@@ -41,16 +40,22 @@ class EarlyFusionDataset(Dataset):
         
         # 2. Dummy 4D radar data (N points x 4 features: x, y, z, velocity)
         # 4 features: x, y, z, doppler_velocity
-        N_points = np.random.randint(50, 150)
+        MAX_RADAR_POINTS = 150
+        N_points = np.random.randint(50, MAX_RADAR_POINTS)
         radar_pc = np.random.randn(N_points, 4) * 10
         
-        # Apply transforms if needed
+        # Pad to fixed size so DataLoader can batch without crashing on ragged tensors
+        padded_radar = np.zeros((MAX_RADAR_POINTS, 4), dtype=np.float32)
+        padded_radar[:N_points] = radar_pc
+        
+        # Apply transforms
         camera_tensor = torch.from_numpy(camera_img).permute(2, 0, 1).float() / 255.0
-        radar_tensor = torch.from_numpy(radar_pc).float()
+        radar_tensor = torch.from_numpy(padded_radar).float()
         
         return {
             'camera': camera_tensor,
             'radar': radar_tensor,
+            'num_radar_points': N_points,
             'frame_id': self.camera_paths[idx]
         }
 

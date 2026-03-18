@@ -16,7 +16,7 @@ def generate_spatial_gate(img_shape, projected_radar_pts, gate_radius=15):
     gate_mask = np.zeros(img_shape, dtype=np.float32)
     
     for (u, v) in projected_radar_pts:
-        cv2.circle(gate_mask, (u, v), gate_radius, 1.0, -1)
+        cv2.circle(gate_mask, (int(u), int(v)), gate_radius, 1.0, -1)
         
     # Optional: Apply Gaussian Blur to create soft gates
     gate_mask = cv2.GaussianBlur(gate_mask, (15, 15), 5.0)
@@ -36,9 +36,9 @@ def apply_radar_gating(noisy_img, gate_mask, amplification_factor=1.5, suppressi
     Returns:
         denoised_img (np.ndarray): The gated and filtered image
     """
-    # Expand mask to match image channels if it's RGB
+    # Expand mask to match image channels if it's RGB (copy to avoid mutating caller's mask)
     if len(noisy_img.shape) == 3:
-        gate_mask = np.expand_dims(gate_mask, axis=-1)
+        gate_mask = np.expand_dims(gate_mask.copy(), axis=-1)
         
     img_float = noisy_img.astype(np.float32)
     
@@ -60,15 +60,17 @@ def calculate_snr(image, signal_mask):
     """
     image_float = image.astype(np.float32)
     
+    # Copy mask to avoid mutating the caller's array
+    mask = signal_mask.copy()
     if len(image.shape) == 3:
-        signal_mask = np.expand_dims(signal_mask, axis=-1)
+        mask = np.expand_dims(mask, axis=-1)
         
     # Extract signal pixels
-    signal_pixels = image_float[signal_mask > 0.5]
+    signal_pixels = image_float[mask > 0.5]
     if len(signal_pixels) == 0:
         return 0.0
         
-    noise_pixels = image_float[signal_mask <= 0.5]
+    noise_pixels = image_float[mask <= 0.5]
     if len(noise_pixels) == 0:
         return float('inf')
         
@@ -77,6 +79,8 @@ def calculate_snr(image, signal_mask):
     
     if noise_power == 0:
         return float('inf')
+    if signal_power == 0:
+        return float('-inf')
         
     snr_db = 10 * np.log10(signal_power / noise_power)
     return snr_db

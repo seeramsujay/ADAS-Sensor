@@ -1,6 +1,5 @@
 import time
 import numpy as np
-import torch
 
 from src.data.loader import EarlyFusionDataset
 from src.utils.calibration import get_mock_calibration_matrices, project_radar_to_camera

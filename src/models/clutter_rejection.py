@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 
 def apply_clutter_rejection(radar_pts_2d, radar_metadata, edge_map, depth_threshold_map=None):
     """
@@ -57,7 +56,10 @@ def apply_clutter_rejection(radar_pts_2d, radar_metadata, edge_map, depth_thresh
             dropped_indices.append(i)
         else:
             valid_indices.append(i)
-            
+    
+    if len(valid_indices) == 0:
+        return np.empty((0, 2), dtype=radar_pts_2d.dtype), np.empty((0, 2), dtype=radar_metadata.dtype), dropped_indices
+    
     filtered_pts = radar_pts_2d[valid_indices]
     filtered_meta = radar_metadata[valid_indices]
     
