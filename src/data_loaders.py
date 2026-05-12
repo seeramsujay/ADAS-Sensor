@@ -5,62 +5,95 @@ import cv2
 import torch
 from torch.utils.data import Dataset, DataLoader
 
+# Note: nuScenes usually requires 'nuscenes-devkit'
+# pip install nuscenes-devkit
+
+class KITTIDataset(Dataset):
+    """
+    Loader for KITTI Object Detection Dataset.
+    Structure:
+    - image_2/*.png
+    - velodyne/*.bin
+    - label_2/*.txt
+    """
+    def __init__(self, root_dir, split='training'):
+        self.root_dir = os.path.join(root_dir, split)
+        self.image_dir = os.path.join(self.root_dir, "image_2")
+        self.lidar_dir = os.path.join(self.root_dir, "velodyne")
+        self.label_dir = os.path.join(self.root_dir, "label_2")
+        
+        self.sample_ids = [f.split('.')[0] for f in os.listdir(self.image_dir) if f.endswith('.png')]
+
+    def __len__(self):
+        return len(self.sample_ids)
+
+    def __getitem__(self, idx):
+        sample_id = self.sample_ids[idx]
+        
+        # 1. Load Image
+        img_path = os.path.join(self.image_dir, f"{sample_id}.png")
+        image = cv2.imread(img_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.resize(image, (640, 360))
+        image = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
+
+        # 2. Load LiDAR (KITTI velodyne is .bin)
+        # We treat LiDAR as Radar-like for early fusion tests
+        lidar_path = os.path.join(self.lidar_dir, f"{sample_id}.bin")
+        pc = np.fromfile(lidar_path, dtype=np.float32).reshape(-1, 4) # [x, y, z, intensity]
+        
+        # Pad/Truncate
+        max_points = 1000
+        if pc.shape[0] < max_points:
+            padding = np.zeros((max_points - pc.shape[0], 4), dtype=np.float32)
+            pc = np.vstack((pc, padding))
+        else:
+            pc = pc[:max_points, :]
+        pc_tensor = torch.from_numpy(pc)
+
+        return image, pc_tensor
+
+class NuScenesDataset(Dataset):
+    """
+    Placeholder for nuScenes. 
+    In practice, use: from nuscenes.nuscenes import NuScenes
+    """
+    def __init__(self, root_dir):
+        self.root_dir = root_dir
+        # Logic to use nuscenes-devkit would go here
+
+    def __len__(self):
+        return 0 # Requires real nuScenes setup
+
 class ADASDataset(Dataset):
     """
-    Generic PyTorch Dataset for loading Camera + Radar data.
-    Works for the mock data structure generated for Waymo, KITTI, nuScenes, etc.
+    The original Generic Dataset (kept for mock data compatibility)
     """
-    def __init__(self, dataset_path, transform=None):
+    def __init__(self, dataset_path):
         self.dataset_path = dataset_path
-        self.transform = transform
         self.image_paths = sorted(glob.glob(os.path.join(dataset_path, "images", "*.png")))
         self.radar_paths = sorted(glob.glob(os.path.join(dataset_path, "radar", "*.npy")))
-        self.label_paths = sorted(glob.glob(os.path.join(dataset_path, "labels", "*.txt")))
-
-        assert len(self.image_paths) == len(self.radar_paths) == len(self.label_paths), \
-            "Mismatch in number of images, radar files, and labels."
 
     def __len__(self):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
-        # 1. Load Image
         image = cv2.imread(self.image_paths[idx])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Resize to a standard size for the network
         image = cv2.resize(image, (640, 360))
         image = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
+        
+        radar = np.load(self.radar_paths[idx])
+        radar_tensor = torch.from_numpy(radar).float()
+        
+        return image, radar_tensor
 
-        # 2. Load Radar Point Cloud (N, 5: x, y, z, v, rcs)
-        radar_pc = np.load(self.radar_paths[idx])
-        # Pad or truncate radar to a fixed number of points (e.g., 200) for batching
-        max_points = 200
-        if radar_pc.shape[0] < max_points:
-            padding = np.zeros((max_points - radar_pc.shape[0], 5), dtype=np.float32)
-            radar_pc = np.vstack((radar_pc, padding))
-        else:
-            radar_pc = radar_pc[:max_points, :]
-        radar_tensor = torch.from_numpy(radar_pc)
-
-        # 3. Load Labels (Bounding boxes)
-        # Using a fixed size for labels to allow batching, format: [num_boxes, 5]
-        max_boxes = 10
-        labels_arr = np.zeros((max_boxes, 5), dtype=np.float32)
-        try:
-            loaded_labels = np.loadtxt(self.label_paths[idx])
-            if len(loaded_labels.shape) == 1 and loaded_labels.shape[0] > 0:
-                loaded_labels = loaded_labels.reshape(1, -1)
-            num_boxes = min(max_boxes, loaded_labels.shape[0])
-            if num_boxes > 0:
-                labels_arr[:num_boxes, :] = loaded_labels[:num_boxes, :]
-        except Exception:
-            pass # Empty file or parsing error
-            
-        labels_tensor = torch.from_numpy(labels_arr)
-
-        return image, radar_tensor, labels_tensor
-
-def get_dataloader(dataset_path, batch_size=4, shuffle=True):
-    dataset = ADASDataset(dataset_path)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=2)
+def get_dataloader(dataset_type, root_dir, batch_size=4):
+    if dataset_type == 'KITTI':
+        dataset = KITTIDataset(root_dir)
+    elif dataset_type == 'nuScenes':
+        dataset = NuScenesDataset(root_dir)
+    else:
+        dataset = ADASDataset(root_dir)
+    
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
