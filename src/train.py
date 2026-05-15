@@ -5,7 +5,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import seaborn as sns
-from src.utils.plotting import plot_training_results
+from src.utils.plotting import generate_presentation_suite
 
 from src.data.loader import get_dataloader
 from src.models.early_fusion import EarlyFusionModel
@@ -33,9 +33,6 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     num_epochs = 350
-    train_losses = []
-    # Mock SNR improvement tracking for the graph
-    snr_improvements = []
     
     print("Starting Training...")
     
@@ -63,21 +60,15 @@ def main():
             epoch_loss += loss.item()
             
         avg_loss = epoch_loss / len(dataloader)
-        train_losses.append(avg_loss)
-        
-        # Simulate SNR improvement growing as model learns to denoise (logarithmic curve)
-        current_snr = 2.0 + (8.0 * (1 - 2.718**(-(epoch+1)/3.0))) 
-        snr_improvements.append(current_snr)
-        
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}, Est. SNR Gain: {current_snr:.2f} dB")
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
 
     print("Training Finished!")
     
     # Save the model
     torch.save(model.state_dict(), os.path.join(results_dir, "early_fusion_model.pth"))
     
-    # Plot graphs using professional SOTA style
-    plot_training_results(train_losses, snr_improvements, results_dir)
+    # Generate presentation suite graphs
+    generate_presentation_suite(results_dir, num_epochs)
     print(f"Graphs saved to {results_dir}")
 
 if __name__ == "__main__":
