@@ -203,10 +203,6 @@ def calculate_snr(
     # Work on a copy of the mask to avoid side-effects in the caller.
     mask = signal_mask.copy()
 
-    # Expand the 2-D mask to match colour channels for boolean indexing.
-    if len(image.shape) == 3:
-        mask = np.expand_dims(mask, axis=-1)  # (H, W) → (H, W, 1)
-
     # ── Signal pixels (inside the radar gate) ───────────────────────────────
     signal_pixels = image_float[mask > 0.5]
     if len(signal_pixels) == 0:

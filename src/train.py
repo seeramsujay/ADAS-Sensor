@@ -5,8 +5,8 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from data_loaders import get_dataloader
-from model import EarlyFusionModel
+from src.data.loader import get_dataloader
+from src.models.early_fusion import EarlyFusionModel
 
 def plot_metrics(train_losses, snr_improvements, results_dir):
     # Plot Training Loss
@@ -36,13 +36,16 @@ def main():
     results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results"))
     os.makedirs(results_dir, exist_ok=True)
 
-    # We will use the 'Waymo' mock dataset for this training loop
-    dataset_path = os.path.join(base_data_dir, "Waymo")
-    if not os.path.exists(dataset_path):
-        print(f"Dataset path {dataset_path} not found. Did you run generate_mock_data.py?")
-        return
-
-    dataloader = get_dataloader(dataset_path, batch_size=4, shuffle=True)
+    # Use the structured EarlyFusionDataset in debug mode instead of the legacy script
+    print("Initializing Unified EarlyFusionDataset in debug mode...")
+    dataloader = get_dataloader(
+        dataset_type='EarlyFusion', 
+        root_dir=base_data_dir, 
+        batch_size=4, 
+        debug=True, 
+        shuffle=True
+    )
+    
     model = EarlyFusionModel(num_classes=3)
     
     criterion = nn.CrossEntropyLoss()
@@ -59,9 +62,12 @@ def main():
         model.train()
         epoch_loss = 0.0
         
-        for images, radar, labels in tqdm(dataloader, desc=f"Epoch {epoch+1}/{num_epochs}"):
+        for batch in tqdm(dataloader, desc=f"Epoch {epoch+1}/{num_epochs}"):
             optimizer.zero_grad()
             
+            images = batch["camera"]
+            radar = batch["radar"]
+
             # Forward pass
             outputs = model(images, radar)
             
