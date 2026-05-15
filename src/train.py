@@ -32,7 +32,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
-    num_epochs = 10
+    num_epochs = 350
     train_losses = []
     # Mock SNR improvement tracking for the graph
     snr_improvements = []
