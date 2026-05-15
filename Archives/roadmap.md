@@ -4,7 +4,7 @@ This roadmap outlines the step-by-step implementation of the early-fusion archit
 
 ## Phase 1: Project Initialization and Setup
 **Objective:** Establish the development environment, baseline tools, and data infrastructure.
-- **Task 1.1 - Workspace Setup:** Initialize version control, define project structure, and determine the software stack (e.g., Python, PyTorch/TensorFlow, ROS 2, OpenCV).
+- [x] **Task 1.1 - Workspace Setup:** Initialize version control, define project structure, and determine the software stack (e.g., Python, PyTorch/TensorFlow, ROS 2, OpenCV).
 - **Task 1.2 - Dataset Acquisition:** Acquire or simulate matched datasets containing both high-ISO/noisy Camera (RGB/NIR) and 4D Radar data in low light/adverse weather (e.g., nuScenes, RADIATE, or CARLA simulations).
 - **Task 1.3 - Data Loaders:** Implement baseline data loading pipelines and visualize the raw streams to formally profile the noise characteristics (e.g., salt-and-pepper visual artifacts, radar multipath).
 

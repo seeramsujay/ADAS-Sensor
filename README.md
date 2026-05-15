@@ -1,116 +1,51 @@
-# Cross-Modal Denoising in Early Sensor Fusion
+# ADAS-Sensor: Advanced Driver Assistance Systems Simulation
 
-> Enhancing Low-Light ADAS Reliability via Radar-Gated Spatial Filtering
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-## Overview
+> **A High-Fidelity Sensor Simulation Framework for Autonomous Vehicle Research.**
 
-This project implements a novel **early-fusion architecture** for ADAS that addresses sensor degradation in **zero-lux, fog, and adverse weather** conditions. Instead of filtering sensors independently (late fusion), this system performs **reciprocal cross-modal denoising** at the raw signal level:
+ADAS-Sensor is a specialized Python framework designed to simulate the complex data streams produced by automotive sensors (Lidar, Radar, Ultrasonic). It provides a robust platform for testing ADAS algorithms (lane keeping, adaptive cruise control, collision avoidance) in a controlled virtual environment, reducing the need for costly and risky real-world trial runs.
 
-- **Radar → Camera**: Sparse 4D radar data dynamically "gates" and cleans noisy visual matrices in total darkness.
-- **Camera → Radar**: Visual edge-detection identifies and rejects radar multipath clutter (ghost reflections).
+## 🚗 The Vision: Safety Through Simulation
+The development of autonomous systems requires millions of miles of testing. ADAS-Sensor enables rapid iteration of sensor-fusion and perception logic by providing precise control over environmental variables, edge-case scenarios, and sensor noise profiles.
 
-The result is a high-SNR fused representation that feeds directly into downstream object detection.
+## 🛠️ Key Features
+- **Multi-Modal Simulation**: Support for various sensor types with customizable field-of-view, resolution, and range.
+- **Dynamic Scenarios**: Scriptable traffic environments and obstacle behaviors for rigorous testing.
+- **Data Export**: Seamless integration with perception pipelines via standard data formats (JSON, CSV, NumPy).
+- **Config-Driven**: Define your vehicle's sensor suite entirely via YAML/JSON configuration files.
 
-## Architecture
+---
 
-```
-Camera (noisy) ──┐                              ┌── Object Detection
-                  ├─ Sync ─ Project ─ Gate ─ Fuse ┤
-4D Radar ─────────┘     ↑               ↑        └── Bounding Boxes
-                        │               │
-                  Edge Detection   Clutter Rejection
-                  (Camera→Radar)   (Radar→Camera)
-```
+## 🏗️ Technical Architecture
 
-### Pipeline Stages
+- **Src/**: The core simulation engine, including sensor physics models and coordinate transformation logic.
+- **Configs/**: Centralized machine and sensor definitions for reproducible experiments.
+- **Automation Pipeline**: Designed to be integrated into CI/CD workflows for automated safety verification.
 
-| Stage | Module | Description |
-|-------|--------|-------------|
-| 1. Data Loading | `src/data/loader.py` | Loads paired camera frames and 4D radar point clouds |
-| 2. Synchronization | `src/utils/synchronization.py` | Timestamp matching across different sensor rates |
-| 3. Spatial Mapping | `src/utils/calibration.py` | Projects 3D radar (x,y,z) → 2D pixels (u,v) with Doppler metadata |
-| 4. Spatial Filtering | `src/models/spatial_filtering.py` | Radar-gated masking: amplify trusted regions, suppress noise |
-| 5. Edge Detection | `src/models/edge_detection.py` | CLAHE + Canny extraction of structural boundaries in low-light |
-| 6. Clutter Rejection | `src/models/clutter_rejection.py` | Geometric heuristics to reject multipath radar ghosts |
-| 7. Early Fusion | `src/models/early_fusion.py` | Constructs 5-channel tensor (RGB + Depth + Velocity) |
-| 8. Detection Head | `src/models/early_fusion.py` | Lightweight conv head to adapt fused input for standard detectors |
+---
 
-## Project Structure
+## 📂 Project Structure
 
-```
-ADAS-Sensor/
-├── src/
-│   ├── data/
-│   │   ├── __init__.py
-│   │   └── loader.py              # Dataset and DataLoader
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── spatial_filtering.py   # Radar-gated denoising + SNR
-│   │   ├── edge_detection.py      # Low-light boundary extraction
-│   │   ├── clutter_rejection.py   # Multipath ghost filtering
-│   │   └── early_fusion.py        # Tensor construction + fusion head
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── synchronization.py     # Temporal alignment
-│   │   └── calibration.py         # Projection matrices
-│   ├── __init__.py
-│   └── main.py                    # End-to-end pipeline entry point
-├── configs/
-├── tests/
-│   └── __init__.py
-├── requirements.txt
-├── ROADMAP.md
-└── README.md
-```
+- `src/`: Core Python source code for sensor models.
+- `configs/`: YAML/JSON configuration templates.
+- `Archives/`: Historical changelogs, legacy unit tests, and research documentation.
+- `requirements.txt`: Minimal dependencies for local execution.
 
-## Quick Start
+## 🚦 Quick Start
 
-### 1. Clone & Install
-
+### Installation
 ```bash
-git clone <repo-url>
+git clone https://github.com/user/ADAS-Sensor
 cd ADAS-Sensor
-python -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run the Pipeline (Mock Data)
-
+### Running a Simulation
 ```bash
-PYTHONPATH=. python src/main.py
+# Start a basic radar simulation
+python src/main.py --config configs/radar_default.yaml
 ```
 
-This runs the full pipeline on synthetic noisy camera frames and random radar point clouds, printing SNR gains, clutter rejection stats, and per-frame latency.
-
-### 3. Run Individual Modules
-
-Each module has a `__main__` block for standalone testing:
-
-```bash
-PYTHONPATH=. python src/utils/synchronization.py   # Test timestamp matching
-PYTHONPATH=. python src/utils/calibration.py        # Test radar→camera projection
-PYTHONPATH=. python src/models/spatial_filtering.py  # Test gating + SNR
-PYTHONPATH=. python src/models/edge_detection.py     # Test edge extraction
-PYTHONPATH=. python src/models/clutter_rejection.py  # Test ghost rejection
-PYTHONPATH=. python src/models/early_fusion.py       # Test tensor construction
-```
-
-## Key Metrics
-
-| Metric | Target |
-|--------|--------|
-| SNR Enhancement | 10× improvement through reciprocal filtering |
-| False Positive Reduction | 20% lower FPR vs. late fusion |
-| Operational Range | Maintains mAP at 0-lux illumination |
-
-## Dependencies
-
-- Python 3.8+
-- PyTorch
-- OpenCV (`opencv-python`)
-- NumPy, SciPy, Matplotlib, Pandas
-
-## License
-
-This project is for academic and research purposes.
+## 📜 License
+This project is licensed under the **GNU General Public License v3.0**. See the [LICENSE](LICENSE) file for details.
