@@ -4,32 +4,13 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import seaborn as sns
+from src.utils.plotting import plot_training_results
 
 from src.data.loader import get_dataloader
 from src.models.early_fusion import EarlyFusionModel
 
-def plot_metrics(train_losses, snr_improvements, results_dir):
-    # Plot Training Loss
-    plt.figure(figsize=(10, 5))
-    plt.plot(train_losses, label='Training Loss', color='blue')
-    plt.title('Early Fusion Model - Training Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(os.path.join(results_dir, 'training_loss.png'))
-    plt.close()
-
-    # Plot SNR Enhancement
-    plt.figure(figsize=(10, 5))
-    plt.plot(snr_improvements, label='SNR Enhancement (dB)', color='green', marker='o')
-    plt.title('Simulated SNR Enhancement in Zero-Lux Environment')
-    plt.xlabel('Epoch')
-    plt.ylabel('SNR Gain (dB)')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(os.path.join(results_dir, 'snr_enhancement.png'))
-    plt.close()
+# Removed inline plot_metrics in favor of src.utils.plotting
 
 def main():
     base_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
@@ -95,8 +76,8 @@ def main():
     # Save the model
     torch.save(model.state_dict(), os.path.join(results_dir, "early_fusion_model.pth"))
     
-    # Plot graphs using matplotlib
-    plot_metrics(train_losses, snr_improvements, results_dir)
+    # Plot graphs using professional SOTA style
+    plot_training_results(train_losses, snr_improvements, results_dir)
     print(f"Graphs saved to {results_dir}")
 
 if __name__ == "__main__":
