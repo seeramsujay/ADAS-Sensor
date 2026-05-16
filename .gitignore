@@ -160,4 +160,5 @@ cython_debug/
 test_data/
 lancedb/
 EarlyFusion_Colab.txt
-EarlyFusion_Colab.ipynb
+paper.md
+Results/*.tex
